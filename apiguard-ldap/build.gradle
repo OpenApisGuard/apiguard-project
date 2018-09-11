@@ -1,0 +1,7 @@
+dependencies {
+    compile("org.apiguard:apiguard-commons:0.0.2-SNAPSHOT",
+            "org.springframework.security:spring-security-core:${springSecurityVersion}",
+            "org.springframework.security:spring-security-ldap:${springSecurityVersion}",
+            "org.springframework.security:spring-security-config:${springSecurityVersion}",
+            "org.springframework.ldap:spring-ldap-core:2.3.1.RELEASE")
+}

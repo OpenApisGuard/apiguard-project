@@ -1,0 +1,7 @@
+plugins {
+    id 'war'
+}
+
+dependencies {
+    compile("org.apiguard:apiguard-rest-data:0.0.2-SNAPSHOT")
+}

@@ -1,0 +1,8 @@
+dependencies {
+    compile project(":apiguard-commons")
+
+    compile("org.apiguard:apiguard-commons:0.0.2-SNAPSHOT",
+            "org.springframework.security:spring-security-core:${springSecurityVersion}",
+            "org.springframework.security:spring-security-jwt:1.0.8.RELEASE",
+            "org.springframework.security.oauth:spring-security-oauth2:2.1.1.RELEASE")
+}

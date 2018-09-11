@@ -1,0 +1,70 @@
+allprojects  {
+  apply plugin: 'java'
+  apply plugin: 'maven'
+
+  apply plugin: 'idea'
+
+  group = 'org.apiguard'
+  version = '0.0.2-SNAPSHOT'
+}
+
+subprojects {
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
+
+  ext {
+    jacksonVersion = '2.8.5'
+    springDataCassandraVersion = '1.5.1.RELEASE'
+    springDataVersion = '1.13.1.RELEASE'
+    springSecurityVersion = '4.2.2.RELEASE'
+    springVersion = '4.3.5.RELEASE'
+  }
+
+  repositories {
+    mavenLocal()
+    
+    maven { url "http://repo.maven.apache.org/maven2" }
+  }
+
+  dependencies {
+    compile("org.slf4j:slf4j-api:1.7.22",
+            "com.datastax.cassandra:cassandra-driver-core:2.1.10.3",
+//            "com.datastax.cassandra:cassandra-driver-core:3.2.0", // not working
+            "org.springframework:spring-aop:${springVersion}",
+            "org.springframework:spring-beans:${springVersion}",
+            "org.springframework:spring-context:${springVersion}",
+            "org.springframework:spring-core:${springVersion}",
+            "org.springframework.data:spring-cql:${springDataCassandraVersion}",
+            "org.springframework.data:spring-data-cassandra:${springDataCassandraVersion}",
+            "org.springframework.data:spring-data-commons:${springDataVersion}",
+            "org.springframework:spring-expression:${springVersion}",
+            "org.springframework:spring-tx:${springVersion}",
+
+            // converter
+            "com.thoughtworks.xstream:xstream:1.4.9",
+            "org.springframework:spring-oxm:${springVersion}",
+            "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}",
+
+            "org.slf4j:slf4j-log4j12:1.7.22",
+            "org.projectlombok:lombok-maven:1.16.16.0",
+            "org.apache.logging.log4j:log4j-api:2.8.2",
+            "org.apache.logging.log4j:log4j-core:2.8.2",
+            "org.springframework:spring-test:${springVersion}",
+            "junit:junit:4.12")
+
+    testCompile("org.powermock:powermock-api-mockito:1.6.6",
+            "org.powermock:powermock-module-junit4:1.6.6")
+  }
+
+  def modules = ['apiguard-commons', 'apiguard-domain', 'apiguard-cassandra','apiguard-service', 'apiguard-jwt', 'apiguard-ldap', 'apiguard-signature', 'apiguard-httpclient', 'apiguard-rest-data', 'apiguard-webapp'].toSet()
+
+  configure(subprojects.findAll { modules.contains(it.name) }) {
+
+    compileJava {
+      options.compilerArgs << "-Xlint:all" << "-Werror" << "-Xlint:-serial"
+    }
+
+  }
+}
+
+

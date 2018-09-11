@@ -1,0 +1,84 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans     
+        http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-4.3.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd">
+
+	<import	resource="classpath:config/SpringBeans/apiguard-service-dependencies.xml" />
+
+	<context:component-scan base-package="org.apiguard.rest">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+	</context:component-scan>
+
+	<mvc:annotation-driven>
+		<mvc:message-converters>
+			<bean class="org.springframework.http.converter.StringHttpMessageConverter" />
+			<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter" />
+			
+			 <bean class="org.springframework.http.converter.xml.MarshallingHttpMessageConverter">
+               <property name="marshaller" ref="xstreamMarshaller" />
+               <property name="unmarshaller" ref="xstreamMarshaller" />
+           </bean> 
+        </mvc:message-converters>
+    </mvc:annotation-driven>
+     
+    <bean id="xstreamMarshaller" class="org.springframework.oxm.xstream.XStreamMarshaller" />
+
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<list>
+				<value>classpath*:config/common/component.properties</value>
+				<value>classpath:config/common/logging.properties</value>
+				<value>classpath:config/common/application.properties</value>
+				<value>classpath:global.properties</value>
+				<value>classpath:global-passwords.properties</value>
+				<value>classpath:local.properties</value>
+			</list>
+		</property>
+		<property name="ignoreResourceNotFound" value="true" />
+	</bean>
+
+	<!-- <bean id="contentNegotiationManager"
+		class="org.springframework.web.accept.ContentNegotiationManagerFactoryBean">
+		<property name="favorPathExtension" value="true" />
+		<property name="ignoreAcceptHeader" value="true" />
+		<property name="useJaf" value="false" />
+		<property name="defaultContentType" value="text/html" />
+
+		<property name="mediaTypes">
+			<map>
+				<entry key="html" value="text/html" />
+				<entry key="json" value="application/json" />
+			</map>
+		</property>
+	</bean>
+
+	<bean
+		class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+		<property name="contentNegotiationManager" ref="contentNegotiationManager" />
+		<property name="viewResolvers">
+			<list>
+				<bean id="viewResolver"
+					class="org.springframework.web.servlet.view.InternalResourceViewResolver"
+					p:viewClass="org.springframework.web.servlet.view.JstlView"
+					p:prefix="/WEB-INF/jsp/" p:suffix=".jsp" p:cacheUnresolved="false"
+					p:exposedContextBeanNames="webProperties" p:order="2" />
+			</list>
+		</property>
+		<property name="defaultViews">
+			<list>
+				<bean
+					class="org.springframework.web.servlet.view.json.MappingJackson2JsonView" />
+			</list>
+		</property>
+	</bean> -->
+
+</beans>
+
+
+

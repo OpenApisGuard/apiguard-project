@@ -1,0 +1,6 @@
+dependencies {
+    compile project(":apiguard-commons")
+
+    compile("org.apiguard:apiguard-commons:0.0.2-SNAPSHOT")
+}
+

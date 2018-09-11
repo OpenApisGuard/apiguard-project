@@ -1,0 +1,6 @@
+dependencies {
+    compile project(":apiguard-domain")
+
+    compile("org.apiguard:apiguard-domain:0.0.2-SNAPSHOT")
+}
+

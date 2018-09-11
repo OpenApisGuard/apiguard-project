@@ -1,0 +1,16 @@
+dependencies {
+    compile project(":apiguard-httpclient"),
+            project(":apiguard-signature"),
+            project(":apiguard-service")
+
+
+    compile("org.apiguard:apiguard-httpclient:0.0.2-SNAPSHOT",
+            "org.apiguard:apiguard-signature:0.0.2-SNAPSHOT",
+            "org.apiguard:apiguard-service:0.0.2-SNAPSHOT",
+            "org.springframework:spring-core:${springVersion}",
+            "org.springframework:spring-web:${springVersion}",
+            "org.springframework:spring-webmvc:${springVersion}",
+            "org.json:json:20160810",
+            "javax.servlet:javax.servlet-api:3.0.1",
+            "javax.servlet:jstl:1.2")
+}

@@ -1,0 +1,14 @@
+dependencies {
+    compile project(":apiguard-commons"),
+            project(":apiguard-cassandra"),
+            project(":apiguard-signature"),
+            project(":apiguard-ldap"),
+            project(":apiguard-jwt")
+
+    compile("org.apiguard:apiguard-commons:0.0.2-SNAPSHOT",
+            "org.apiguard:apiguard-cassandra:0.0.2-SNAPSHOT",
+            "org.apiguard:apiguard-signature:0.0.2-SNAPSHOT",
+            "org.apiguard:apiguard-ldap:0.0.2-SNAPSHOT",
+            "org.apiguard:apiguard-jwt:0.0.2-SNAPSHOT")
+}
+

@@ -1,0 +1,9 @@
+dependencies {
+    compile project(":apiguard-commons"),
+            project(":apiguard-domain")
+
+    compile("org.apiguard:apiguard-commons:0.0.2-SNAPSHOT",
+            "org.apiguard:apiguard-domain:0.0.2-SNAPSHOT",
+            "org.apache.httpcomponents:httpclient:4.5.3",
+            "org.springframework:spring-web:${springVersion}")
+}
