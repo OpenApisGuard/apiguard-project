@@ -8,23 +8,31 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -36,6 +44,7 @@ import java.net.URISyntaxException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /*
  * Copyright 2017 the original author or authors.
@@ -86,47 +95,58 @@ public class ApiGuardApacheHttpClient {
     private Integer maxSocketTimeoutMs = DEFAULT_SOCKET_TIMEOUT_MS;
 
     @PostConstruct
-    public void setup() throws Exception {
+    public void setup() {
         // setup a Trust Strategy that allows all certificates.
-        //
-        SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
-            public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-                return true;
-            }
-        }).build();
 
-        // don't check Hostnames, either.
-        HostnameVerifier hostnameVerifier = NoopHostnameVerifier.INSTANCE;
+        try {
+            SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
+                public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+                    return true;
+                }
+            }).build();
 
-        // here's the special part:
-        //      -- need to create an SSL Socket Factory, to use our weakened "trust strategy";
-        //      -- and create a Registry, to register it.
-        SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext, hostnameVerifier);
-        Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
-                .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                .register("https", sslSocketFactory)
-                .build();
+            // don't check Hostnames, either.
+            HostnameVerifier hostnameVerifier = NoopHostnameVerifier.INSTANCE;
 
-        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
-        cm.setMaxTotal(maxConnections);
-        cm.setDefaultMaxPerRoute(maxConnectionsPerRoute);
-        cm.setValidateAfterInactivity(maxInactivityMs);
+            // here's the special part:
+            //      -- need to create an SSL Socket Factory, to use our weakened "trust strategy";
+            //      -- and create a Registry, to register it.
+            SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext, hostnameVerifier);
+            Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
+                    .register("http", PlainConnectionSocketFactory.getSocketFactory())
+                    .register("https", sslSocketFactory)
+                    .build();
 
-        RequestConfig.Builder requestBuilder = RequestConfig.custom()
-                .setConnectTimeout(maxRequestConnectTimeoutMs)
-                .setConnectionRequestTimeout(maxRequestConnectTimeoutMs)
-                .setSocketTimeout(maxSocketTimeoutMs);
+            PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
+            cm.setMaxTotal(maxConnections);
+            cm.setDefaultMaxPerRoute(maxConnectionsPerRoute);
+            cm.setValidateAfterInactivity(maxInactivityMs);
 
-        HttpClientBuilder builder = HttpClientBuilder.create();
-        builder.setDefaultRequestConfig(requestBuilder.build());
-        builder.setConnectionManager(cm);
-        builder.setRetryHandler(new DefaultHttpRequestRetryHandler(3, true));
+            RequestConfig.Builder requestBuilder = RequestConfig.custom()
+                    .setConnectTimeout(maxRequestConnectTimeoutMs)
+                    .setConnectionRequestTimeout(maxRequestConnectTimeoutMs)
+                    .setSocketTimeout(maxSocketTimeoutMs);
 
-        httpClient = builder.build();
+            HttpClientBuilder builder = HttpClientBuilder.create();
+            builder.setDefaultRequestConfig(requestBuilder.build());
+            builder.setConnectionManager(cm);
+            builder.setRetryHandler(new DefaultHttpRequestRetryHandler(3, true));
+
+            httpClient = builder.build();
+
+            // start deamon thread for clean up
+            Thread t = new Thread(new IdleConnectionMonitorThread(cm));
+            t.setDaemon(true);//success is here now
+            t.start();
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public HttpResponse get(String url, String query, Map<String, String> headers)
+    public ResponseEntity get(String url, String query, Map<String, String> headers)
             throws HttpClientException {
+        HttpResponse response = null;
         try {
             StringBuilder requestUrl = prepareRequest(url, query);
 
@@ -138,46 +158,74 @@ public class ApiGuardApacheHttpClient {
                 }
             }
 
-            return httpClient.execute(request);
+            response = httpClient.execute(request);
+            return constructResp(response);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             throw new HttpClientException(e);
+        }
+        finally {
+            HttpClientUtils.closeQuietly(response);
         }
     }
 
-    public HttpResponse post(String url, String query, HashMap<String, String> headers, String body)
+    public ResponseEntity post(String url, String query, HashMap<String, String> headers, String body)
             throws HttpClientException {
 
+        HttpResponse response = null;
         try {
             StringBuilder urlSb = prepareRequest(url, query);
-            return execute(urlSb.toString(), METHOD_POST, headers, body);
+            response = execute(urlSb.toString(), METHOD_POST, headers, body);
+            return constructResp(response);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             throw new HttpClientException(e);
+        }
+        finally {
+            HttpClientUtils.closeQuietly(response);
         }
     }
 
-    public HttpResponse put(String url, String query, HashMap<String, String> headers, String body)
+    public ResponseEntity put(String url, String query, HashMap<String, String> headers, String body)
             throws HttpClientException {
 
+        HttpResponse response = null;
         try {
             StringBuilder urlSb = prepareRequest(url, query);
-            return execute(urlSb.toString(), METHOD_PUT, headers, body);
+            response = execute(urlSb.toString(), METHOD_PUT, headers, body);
+            return constructResp(response);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             throw new HttpClientException(e);
+        }
+        finally {
+            HttpClientUtils.closeQuietly(response);
         }
     }
 
-    public HttpResponse delete(String url, String query, HashMap<String, String> headers, String body)
+    public ResponseEntity delete(String url, String query, HashMap<String, String> headers, String body)
             throws HttpClientException {
 
+        HttpResponse response = null;
         try {
             StringBuilder urlSb = prepareRequest(url, query);
-            return execute(urlSb.toString(), METHOD_DELETE, headers, body);
+            response = execute(urlSb.toString(), METHOD_DELETE, headers, body);
+            return constructResp(response);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             throw new HttpClientException(e);
+        }
+        finally {
+            HttpClientUtils.closeQuietly(response);
         }
     }
 
     private HttpResponse execute(final String uri, final String method, HashMap<String, String> headers, String body) throws IOException, URISyntaxException {
+        log.info("Executing: " + method + " " + uri);
+        if (log.isDebugEnabled()) {
+            log.debug("*** Headers: " + headers.toString() + " , body: " + body);
+        }
+
         HttpEntityEnclosingRequestBase httpReq = new HttpEntityEnclosingRequestBase() {
             @Override
             public String getMethod() {
@@ -188,7 +236,10 @@ public class ApiGuardApacheHttpClient {
         httpReq.setURI(new URI(uri));
         prepareRequest(uri, headers, body, httpReq);
 
-        return httpClient.execute(httpReq);
+        HttpResponse resp = httpClient.execute(httpReq);
+        log.info("Executed: " + method + " " + uri + " , status: " + resp.getStatusLine().getStatusCode());
+
+        return resp;
     }
 
     private void prepareRequest(String uri, HashMap<String, String> headers, String body, HttpEntityEnclosingRequestBase httpReq) throws IOException {
@@ -214,9 +265,7 @@ public class ApiGuardApacheHttpClient {
                 requestUrl.append("?");
                 requestUrl.append(query);
             }
-
             log.debug(requestUrl.toString());
-
             return requestUrl;
         }
 
@@ -237,9 +286,65 @@ public class ApiGuardApacheHttpClient {
             requestUrl.append("?");
             requestUrl.append(querystring);
         }
-
         log.debug(requestUrl.toString());
-
         return requestUrl;
     }
+
+    private ResponseEntity constructResp(HttpResponse resp) throws HttpClientException, IOException {
+        log.debug("Resp code: " + resp.getStatusLine().getStatusCode());
+        HttpHeaders responseHeaders = new HttpHeaders();
+        HttpEntity entity = resp.getEntity();
+        String mimeType = "";
+        String respStr = "";
+        if (entity != null) {
+            ContentType contentType = ContentType.getOrDefault(entity);
+            mimeType = contentType.getMimeType();
+            responseHeaders.setContentType(MediaType.valueOf(mimeType));
+            respStr = EntityUtils.toString(entity);
+        }
+
+        if (mimeType.contains("pdf")) {
+            //TODO: support pdf later
+            return new ResponseEntity<String>(respStr, responseHeaders, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<String>(respStr, responseHeaders, HttpStatus.OK);
+        }
+    }
+
+    public class IdleConnectionMonitorThread extends Thread {
+
+        private final HttpClientConnectionManager connMgr;
+        private volatile boolean shutdown;
+
+        public IdleConnectionMonitorThread(HttpClientConnectionManager connMgr) {
+            super();
+            this.connMgr = connMgr;
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (!shutdown) {
+                    synchronized (this) {
+                        wait(5000);
+                        // Close expired connections
+                        connMgr.closeExpiredConnections();
+                        // Optionally, close connections
+                        // that have been idle longer than 30 sec
+                        connMgr.closeIdleConnections(30, TimeUnit.SECONDS);
+                    }
+                }
+            } catch (InterruptedException ex) {
+                // terminate
+            }
+        }
+
+        public void shutdown() {
+            shutdown = true;
+            synchronized (this) {
+                notifyAll();
+            }
+        }
+    }
+
 }

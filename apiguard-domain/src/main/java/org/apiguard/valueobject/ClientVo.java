@@ -22,12 +22,33 @@ public class ClientVo extends BaseRestResource {
 
 	private String clientId;
 
-	public ClientVo(String id, String creationDate, String lastUpdateDate, String clientId) {
+	private String email;
+
+	private String firstName;
+
+	private String lastName;
+
+	public ClientVo(String id, String creationDate, String lastUpdateDate, String clientId, String email, String firstName, String lastName) {
 		super(id, creationDate, lastUpdateDate);
 		this.clientId = clientId;
+		this.email = email;
+		this.firstName = firstName;
+		this.lastName = lastName;
 	}
 
 	public String getClientId() {
 		return clientId;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public String getFirstName() {
+		return firstName;
+	}
+
+	public String getLastName() {
+		return lastName;
 	}
 }

@@ -43,7 +43,7 @@ public class JwtAuthEntity extends BaseEntity implements JwtAuth {
     public JwtAuthEntity() {
     }
 
-    public JwtAuthEntity(String id, Date creationDate, Date lastUpdateDate, String reqUri, String clientId, String group,
+    public JwtAuthEntity(String id, Date creationDate, Date lastUpdateDate, String reqUri, String clientId,
                          String secret) {
         super(id, creationDate, lastUpdateDate);
         this.issuer = id;

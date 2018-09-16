@@ -25,4 +25,6 @@ public interface SignatureAuth extends Base {
 	public String getClientAlias();
 
 	public String getClientId();
+
+	public String getDecryptedSecret();
 }

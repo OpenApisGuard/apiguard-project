@@ -30,13 +30,15 @@ public class SignatureAuthEntity extends BaseEntity implements SignatureAuth {
 
     private String secret;
 
+    private String decryptedSecret;
+
     public SignatureAuthEntity() {
     }
 
-    public SignatureAuthEntity(String id, Date creationDate, Date lastUpdateDate, String reqUri, String clientId, String group, String clientAlias,
+    public SignatureAuthEntity(String id, Date creationDate, Date lastUpdateDate, String reqUri, String clientId, String clientAlias,
                                String secret) {
         super(id, creationDate, lastUpdateDate);
-        pk = new SignatureAuthId(reqUri, clientId, group, clientAlias);
+        pk = new SignatureAuthId(reqUri, clientId, clientAlias);
         this.secret = secret;
     }
 
@@ -66,5 +68,13 @@ public class SignatureAuthEntity extends BaseEntity implements SignatureAuth {
 
     public void setSecret(String secret) {
         this.secret = secret;
+    }
+
+    public String getDecryptedSecret() {
+        return decryptedSecret;
+    }
+
+    public void setDecryptedSecret(String decryptedSecret) {
+        this.decryptedSecret = decryptedSecret;
     }
 }

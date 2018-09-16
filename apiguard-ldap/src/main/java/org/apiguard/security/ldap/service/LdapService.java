@@ -1,5 +1,7 @@
 package org.apiguard.security.ldap.service;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apiguard.security.ldap.exceptions.ApiGuardLdapException;
 import org.springframework.ldap.AuthenticationException;
 import org.springframework.ldap.core.DirContextOperations;
@@ -29,8 +31,10 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class LdapService {
+    private static final Logger log = LogManager.getLogger(LdapService.class);
 
     public boolean authenticate(String ldapUrl, String adminDn, String adminPassword, String userBase, String userAttr, String userName, String password) throws ApiGuardLdapException {
+        log.debug("Auth using url: " + ldapUrl + ", userBase: " + userBase + ", userAttr: " + userAttr + ", userName: " + userName);
         try {
             LdapContextSource contextSource = new LdapContextSource();
             contextSource.setUrl(ldapUrl);
@@ -47,15 +51,19 @@ public class LdapService {
             return true;
         }
         catch(AuthenticationException e) {
+            log.error("Invalid admin credentails", e);
             throw new ApiGuardLdapException("Invalid admin credentails", e);
         }
         catch(BadCredentialsException e) {
+            log.error("Invalid user credentails", e);
             throw new ApiGuardLdapException("Invalid user credentails", e);
         }
         catch(UsernameNotFoundException e) {
+            log.error("Invalid user id", e);
             throw new ApiGuardLdapException("Invalid user id", e);
         }
         catch(Exception e) {
+            log.error(e.getMessage(), e);
             throw new ApiGuardLdapException(e.getMessage(), e);
         }
     }

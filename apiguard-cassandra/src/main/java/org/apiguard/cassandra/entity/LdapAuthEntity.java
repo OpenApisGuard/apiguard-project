@@ -47,10 +47,10 @@ public class LdapAuthEntity extends BaseEntity implements LdapAuth {
     public LdapAuthEntity() {
     }
 
-    public LdapAuthEntity(String id, Date creationDate, Date lastUpdateDate, String reqUri, String clientId, String group, String ldapUrl,
+    public LdapAuthEntity(String id, Date creationDate, Date lastUpdateDate, String reqUri, String clientId, String ldapUrl,
                           String adminDn, String adminPassword, String userBase, String userAttr, Integer cacheExpireInSecond) {
         super(id, creationDate, lastUpdateDate);
-        pk = new LdapAuthId(reqUri, clientId, group);
+        pk = new LdapAuthId(reqUri, clientId);
         this.ldapUrl = ldapUrl;
         this.adminDn = adminDn;
         this.adminPassword = adminPassword;

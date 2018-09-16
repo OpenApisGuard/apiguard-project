@@ -30,6 +30,8 @@ public class KeyAuthEntity extends BaseEntity implements KeyAuth {
 
 	private String clientId;
 
+	private String decryptedKey;
+
 	public KeyAuthEntity() {
 	}
 	
@@ -55,6 +57,14 @@ public class KeyAuthEntity extends BaseEntity implements KeyAuth {
 		return pk;
 	}
 
+	public String getDecryptedKey() {
+		return decryptedKey;
+	}
+
+	public void setDecryptedKey(String decryptedKey) {
+		this.decryptedKey = decryptedKey;
+	}
+
 	public void setPk(KeyAuthId pk) {
 		this.pk = pk;
 	}
@@ -62,4 +72,6 @@ public class KeyAuthEntity extends BaseEntity implements KeyAuth {
 	public void setClientId(String clientId) {
 		this.clientId = clientId;
 	}
+
+
 }

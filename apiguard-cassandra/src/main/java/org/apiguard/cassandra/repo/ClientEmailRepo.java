@@ -1,6 +1,6 @@
 package org.apiguard.cassandra.repo;
 
-import org.apiguard.cassandra.entity.ClientEntity;
+import org.apiguard.cassandra.entity.ClientEmailEntity;
 import org.springframework.data.repository.CrudRepository;
 
 /*
@@ -19,8 +19,6 @@ import org.springframework.data.repository.CrudRepository;
  * limitations under the License.
  */
 
-public interface ClientRepo extends CrudRepository<ClientEntity, String> {
-
-//    Page<ClientEntity> findAll(Pageable pageable);
+public interface ClientEmailRepo extends CrudRepository<ClientEmailEntity, String> {
 
 }

@@ -49,9 +49,6 @@ public abstract class AuthChecker {
         //oauth, jwt, and hmac use Authorization header
         keyVal = req.getHeader(HttpHeaders.AUTHORIZATION);
 
-        //TODO: Get group info from subdomain url
-        String group = "group1";
-
         try {
             if (keyVal != null) {
                 String authid = keyVal.substring(0, keyVal.indexOf(" "));
@@ -68,7 +65,7 @@ public abstract class AuthChecker {
                     case BASIC:
                         String credential = getCredentials(keyVal);
                         int ind = credential.indexOf(":");
-                        return apiAuthService.basicAuthMatches(reqUri, credential.substring(0, ind), group, credential.substring(ind+1));
+                        return apiAuthService.basicAuthMatches(reqUri, credential.substring(0, ind), credential.substring(ind+1));
                     case DIGITAL_SIGNATURE:
                         break;
                     case HMAC:
@@ -78,7 +75,7 @@ public abstract class AuthChecker {
                     case LDAP:
                         String ldapCredential = getCredentials(keyVal);
                         int cInd = ldapCredential.indexOf(":");
-                        return apiAuthService.ldapAuthMatches(reqUri, ldapCredential.substring(0, cInd), group, ldapCredential.substring(cInd+1));
+                        return apiAuthService.ldapAuthMatches(reqUri, ldapCredential.substring(0, cInd), ldapCredential.substring(cInd+1));
                     case OAUTH2:
                         break;
                     case SIGNATURE:
@@ -89,6 +86,7 @@ public abstract class AuthChecker {
             }
         }
         catch(Exception e) {
+            log.error(e.getMessage(), e);
             return false;
         }
 

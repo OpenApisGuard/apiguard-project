@@ -1,0 +1,25 @@
+plugins {
+    id "org.springframework.boot" version "2.0.0.RELEASE" apply false
+}
+
+configurations {all*.exclude group: "org.springframework.boot", module: "spring-boot-starter-logging"
+}
+
+dependencies {
+    compile project(":apiguard-rest-data")
+
+    compile("org.apiguard:apiguard-rest-data:0.0.2-SNAPSHOT",
+            "commons-io:commons-io:2.5",
+            "javax.annotation:javax.annotation-api:1.3.2",
+
+            "org.springframework.boot:spring-boot-starter-data-cassandra:${springbootVersion}",
+            "org.springframework.boot:spring-boot-starter-log4j2:${springbootVersion}",
+            "org.springframework.boot:spring-boot-starter-actuator:${springbootVersion}")
+
+    compile ("org.springframework.boot:spring-boot-starter:${springbootVersion}") {
+        exclude module : 'spring-boot-starter-logging'
+    }
+    compile ("org.springframework.boot:spring-boot-starter-web:${springbootVersion}") {
+        exclude module : 'spring-boot-starter-logging'
+    }
+}

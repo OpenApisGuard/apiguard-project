@@ -26,18 +26,35 @@ import java.util.Date;
 public class ClientEntity extends BaseEntity implements Client {
 
 	@PrimaryKey
-	private ClientId clientPk;
-	
-	public ClientEntity(String id, Date creationDate, Date lastUpdateDate, String clientId, String group) {
+	private String clientId;
+
+	private String email;
+
+	private String firstName;
+
+	private String lastName;
+
+	public ClientEntity(String id, Date creationDate, Date lastUpdateDate, String clientId, String email, String firstName, String lastName) {
 		super(id, creationDate, lastUpdateDate);
-		this.clientPk = new ClientId(clientId, group);
+		this.clientId = clientId;
+		this.email = email;
+		this.firstName = firstName;
+		this.lastName = lastName;
 	}
 
 	public String getClientId() {
-		return clientPk.getClientId();
+		return clientId;
 	}
 
-	public String getGroup() {
-		return clientPk.getGroup();
+	public String getEmail() {
+		return email;
+	}
+
+	public String getFirstName() {
+		return firstName;
+	}
+
+	public String getLastName() {
+		return lastName;
 	}
 }

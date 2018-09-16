@@ -7,8 +7,12 @@
         http://www.springframework.org/schema/data/cassandra http://www.springframework.org/schema/data/cassandra/spring-cassandra.xsd
         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
+	<!--<cassandra:cluster id="cassandraCluster"-->
+		<!--contact-points="127.0.0.1" port="9042" username="cassandra" password="cassandra" />-->
+
 	<cassandra:cluster id="cassandraCluster"
-		contact-points="127.0.0.1" port="9042" username="cassandra" password="cassandra" />
+					   contact-points="cassandra-cql.myproject.svc" port="9042" username="cassandra" password="cassandra" />
+
 
 	<cassandra:session id="session" cluster-ref="cassandraCluster"
 		keyspace-name="apiguard" schema-action="RECREATE" /> <!-- for dev to recreate each time -->

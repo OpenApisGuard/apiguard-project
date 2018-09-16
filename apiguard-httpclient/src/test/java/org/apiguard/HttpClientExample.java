@@ -16,13 +16,11 @@ package org.apiguard;
  * limitations under the License.
  */
 
-import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apiguard.http.ApiGuardApacheHttpClient;
+import org.springframework.http.ResponseEntity;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.HashMap;
 
 public class HttpClientExample {
@@ -43,20 +41,11 @@ public class HttpClientExample {
         headers.put("postman-token", "87660015-96bd-dc5e-05ad-c86f31032bf7");
         // cause 404
 //        headers.put("host","localhost:8080");
-        HttpResponse response = httpClient.get("https://www.google.com/search", "q=httpClient", headers);
+        ResponseEntity responseEntity = httpClient.get("https://www.google.com/search", "q=httpClient", headers);
 
         System.out.println("Response Code : "
-                + response.getStatusLine().getStatusCode());
+                + responseEntity.getStatusCode().value());
 
-        BufferedReader rd = new BufferedReader(
-                new InputStreamReader(response.getEntity().getContent()));
-
-        StringBuffer result = new StringBuffer();
-        String line = "";
-        while ((line = rd.readLine()) != null) {
-            result.append(line);
-        }
-
-        System.out.println(result);
+        System.out.println(responseEntity.getBody());
     }
 }

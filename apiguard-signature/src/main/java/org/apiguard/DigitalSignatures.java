@@ -1,13 +1,16 @@
 package org.apiguard;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apiguard.crypto.Algorithm;
 import org.apiguard.crypto.exception.CryptoException;
 
-import javax.crypto.Mac;
 import java.io.File;
 import java.nio.file.Files;
 import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
+
+
 
 /*
  * Copyright 2017 the original author or authors.
@@ -26,6 +29,8 @@ import java.security.spec.X509EncodedKeySpec;
  */
 
 public class DigitalSignatures {
+
+    private static final Logger log = LogManager.getLogger(DigitalSignatures.class);
 
     public static String sign(String privateKeyFile, String data, Algorithm algorithm) throws CryptoException {
         return sign(privateKeyFile, null, data, algorithm);
@@ -60,10 +65,12 @@ public class DigitalSignatures {
                 return new String(sig.sign());
             }
             else {
+                log.warn("Unsupported algorithm: " + algorithm.getId());
                 throw new CryptoException("Unsupported algorithm: " + algorithm.getId());
             }
         }
         catch(Exception e) {
+            log.error(e.getMessage(), e);
             throw new CryptoException(e.getMessage(), e);
         }
 
@@ -106,10 +113,12 @@ public class DigitalSignatures {
                 return sig.verify(sigToVerify);
             }
             else {
+                log.warn("Unsupported algorithm: " + algorithm.getId());
                 throw new CryptoException("Unsupported algorithm: " + algorithm.getId());
             }
         }
         catch(Exception e) {
+            log.error(e.getMessage(), e);
             throw new CryptoException(e.getMessage(), e);
         }
     }

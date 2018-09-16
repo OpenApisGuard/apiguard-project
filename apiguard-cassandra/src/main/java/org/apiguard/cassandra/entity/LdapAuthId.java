@@ -32,21 +32,13 @@ public class LdapAuthId implements Serializable {
 	@PrimaryKeyColumn(name = "clientId", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
 	private String clientId;
 
-	@PrimaryKeyColumn(name = "groupId", ordinal = 2, type = PrimaryKeyType.PARTITIONED)
-	private String groupId;
-
-	public LdapAuthId(String reqUri, String clientId, String groupId) {
+	public LdapAuthId(String reqUri, String clientId) {
 		this.clientId = clientId;
 		this.reqUri = reqUri;
-		this.groupId = groupId;
 	}
 
 	public String getClientId() {
 		return clientId;
-	}
-
-	public String getGroupId() {
-		return groupId;
 	}
 
 	public String getReqUri() {
@@ -58,7 +50,6 @@ public class LdapAuthId implements Serializable {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + clientId.hashCode();
-		result = prime * result + groupId.hashCode();
 		result = prime * result + reqUri.hashCode();
 		return result;
 	}
@@ -77,13 +68,6 @@ public class LdapAuthId implements Serializable {
 				return false;
 		} else if (!clientId.equals(other.clientId))
 			return false;
-		if (groupId == null) {
-			if (other.groupId != null)
-				return false;
-		}
-		else if (!groupId.equals(other.groupId)) {
-			return false;
-		}
 		if (reqUri == null) {
 			if (other.reqUri != null)
 				return false;

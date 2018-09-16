@@ -22,4 +22,6 @@ public interface KeyAuth extends Base {
 	public String getKey();
 
 	public String getReqUri();
+
+	public String getDecryptedKey();
 }

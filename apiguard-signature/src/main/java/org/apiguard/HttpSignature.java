@@ -3,6 +3,8 @@ package org.apiguard;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apiguard.crypto.Algorithm;
 import org.apiguard.crypto.exception.CryptoException;
 
@@ -29,6 +31,7 @@ import java.security.NoSuchAlgorithmException;
  */
 
 public class HttpSignature {
+    private static final Logger log = LogManager.getLogger(HttpSignature.class);
 
     /**
      * Create a base64 HMAC signature
@@ -44,10 +47,12 @@ public class HttpSignature {
                 return Base64.encodeBase64String(data);
             }
             else {
+                log.warn("Unsupported algorithm: " + algorithm.getId());
                 throw new CryptoException("Unsupported algorithm: " + algorithm.getId());
             }
         }
         catch (Exception e) {
+            log.error(e.getMessage(), e);
             throw new CryptoException(e.getMessage(), e);
         }
     }
@@ -60,10 +65,12 @@ public class HttpSignature {
                 return Hex.encodeHexString(data);
             }
             else {
+                log.warn("Unsupported algorithm: " + algorithm.getId());
                 throw new CryptoException("Unsupported algorithm: " + algorithm.getId());
             }
         }
         catch (Exception e) {
+            log.error(e.getMessage(), e);
             throw new CryptoException(e.getMessage(), e);
         }
     }

@@ -1,6 +1,8 @@
 package org.apiguard.security.jwt.service;
 
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apiguard.security.jwt.exceptions.ApiGuardJwtException;
 import org.json.JSONObject;
 import org.springframework.security.jwt.Jwt;
@@ -34,9 +36,11 @@ public class JwtService {
     private static final String NOT_BEFORE = "nbf";
     private static final String EXPIRES = "exp";
 
-    public boolean verify(String jwtStr, String secret) throws ApiGuardJwtException {
+    private static final Logger log = LogManager.getLogger(JwtService.class);
 
+    public boolean verify(String jwtStr, String secret) throws ApiGuardJwtException {
         if (StringUtils.isEmpty(jwtStr) || StringUtils.isEmpty(secret)) {
+            log.info("JWT or secret is empty.");
             return false;
         }
 
@@ -46,11 +50,11 @@ public class JwtService {
             JwtHelper.decodeAndVerify(jwtStr, verifer);
         }
         catch(InvalidSignatureException e) {
-            //log validation failed
+            log.info("Validation failed for JWT: " + jwtStr);
             return false;
         }
         catch (Exception e) {
-            // log exception
+            log.error(e.getMessage(), e);
             return false;
         }
 
@@ -63,6 +67,7 @@ public class JwtService {
 
     public String getClaimsAndVerify(String jwtStr, String secret) throws ApiGuardJwtException {
         if (StringUtils.isEmpty(jwtStr) || StringUtils.isEmpty(secret)) {
+            log.info("JWT or secret is empty.");
             return null;
         }
 
@@ -74,17 +79,18 @@ public class JwtService {
             return jwt.getClaims();
         }
         catch(InvalidSignatureException e) {
-            //log validation failed
+            log.info("Validation failed for JWT: " + jwtStr);
             return null;
         }
         catch (Exception e) {
-            // log exception
+            log.error(e.getMessage(), e);
             return null;
         }
     }
 
     public String getIssuer(String jwtStr) throws ApiGuardJwtException {
         if (StringUtils.isEmpty(jwtStr)) {
+            log.info("Validation failed for JWT: " + jwtStr);
             return null;
         }
 
@@ -99,11 +105,11 @@ public class JwtService {
             return (String) jo.get(ISSUER);
         }
         catch(InvalidSignatureException e) {
-            //log validation failed
+            log.info("Validation failed for JWT: " + jwtStr);
             return null;
         }
         catch (Exception e) {
-            // log exception
+            log.error(e.getMessage(), e);
             return null;
         }
     }
@@ -119,7 +125,7 @@ public class JwtService {
             return new Date().before(new Date(notBefore));
         }
         catch (Exception e) {
-            // log exception
+            log.error(e.getMessage(), e);
             return false;
         }
     }
@@ -135,7 +141,7 @@ public class JwtService {
             return new Date().after(new Date(exp));
         }
         catch (Exception e) {
-            // log exception
+            log.error(e.getMessage(), e);
             return false;
         }
     }

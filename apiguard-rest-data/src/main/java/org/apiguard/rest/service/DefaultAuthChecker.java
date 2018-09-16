@@ -1,5 +1,7 @@
 package org.apiguard.rest.service;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apiguard.service.exceptions.ApiAuthException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
@@ -28,6 +30,8 @@ import java.util.List;
 @Component
 public class DefaultAuthChecker extends AuthChecker {
 
+    private static final Logger log = LogManager.getLogger(DefaultAuthChecker.class);
+
     /**
      * Authorization:signature keyId="clientId:clientAlias",algorithm="hmac-sha256",headers="request date digest",signature="abc.."
      *
@@ -45,7 +49,6 @@ public class DefaultAuthChecker extends AuthChecker {
             String authVal = req.getHeader(HttpHeaders.AUTHORIZATION);
             authVal = authVal.substring(authVal.indexOf(" ")+1);
 
-            String group = "";  //TODO: grab from subdomain
             String clientId = "";
             String clientAlias = "";
             String algorithm = "";
@@ -60,7 +63,7 @@ public class DefaultAuthChecker extends AuthChecker {
                 String v = p.substring(ind+2, p.length()-1);
 
                 if (k.equals(CLIENT_ALIAS)) {
-                    int endIndex = v.lastIndexOf(":");
+                    int endIndex = v.indexOf(":");
                     clientId = v.substring(0, endIndex);
                     clientAlias = v.substring(endIndex+1);
                 }
@@ -106,9 +109,10 @@ public class DefaultAuthChecker extends AuthChecker {
 
             String stringToSign = sb.toString();
 
-            return apiAuthService.signatureAuthMatches(reqUri, clientId, group, clientAlias, algorithm, stringToSign, signature);
+            return apiAuthService.signatureAuthMatches(reqUri, clientId, clientAlias, algorithm, stringToSign, signature);
         }
         catch(Exception e) {
+            log.error(e.getMessage(), e);
             throw new ApiAuthException(e.getMessage(), e);
         }
     }

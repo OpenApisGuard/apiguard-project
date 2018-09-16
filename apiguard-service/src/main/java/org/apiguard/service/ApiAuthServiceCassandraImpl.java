@@ -91,7 +91,7 @@ public class ApiAuthServiceCassandraImpl implements ApiAuthService {
         encryptor = Encryptors.queryableText(secret, salt);
     }
 
-    public KeyAuthEntity addKeyAuth(String requestUri, String clientId, String group, String key) throws ApiAuthException {
+    public KeyAuthEntity addKeyAuth(String requestUri, String clientId, String key) throws ApiAuthException {
         log.debug("Adding key auth to requestUri: " + requestUri, ", with clientId: " + clientId);
         ApiEntity api = apiService.getApiByReqUri(requestUri);
         if (api == null) {
@@ -99,14 +99,14 @@ public class ApiAuthServiceCassandraImpl implements ApiAuthService {
             throw new ApiAuthException("Api requst uri: " + requestUri + " not found.");
         }
 
-        ClientEntity client = clientService.getClient(clientId, group);
+        ClientEntity client = clientService.getClient(clientId);
         if (client == null) {
             log.error("Client: " + client + " not found.");
             throw new ApiAuthException("Client: " + client + " not found.");
         }
 
         Date now = new Date();
-        KeyAuthEntity keyAuth = new KeyAuthEntity(UUID.randomUUID().toString(), now, now, requestUri, key, clientId);
+        KeyAuthEntity keyAuth = new KeyAuthEntity(UUID.randomUUID().toString(), now, now, requestUri, encryptor.encrypt(key), clientId);
         keyAuthRepo.save(keyAuth);
 
         log.debug("Added key auth to requestUri: " + requestUri, ", with clientId: " + clientId);
@@ -118,40 +118,38 @@ public class ApiAuthServiceCassandraImpl implements ApiAuthService {
             throw new ApiAuthException(e.getMessage(), e);
         }
 
+        keyAuth.setDecryptedKey(key);
         return keyAuth;
     }
 
-    public KeyAuthEntity getKeyAuth(String key, String requestUri) throws ApiAuthException {
-        KeyAuthId id = new KeyAuthId(requestUri, key);
-        return keyAuthRepo.findOne(id);
-    }
-
-    public BasicAuthEntity addBasicAuth(String requestUri, String clientId, String group, String password)
+    public BasicAuthEntity addBasicAuth(String requestUri, String clientId, String password)
             throws ApiAuthException {
         ApiEntity api = apiService.getApiByReqUri(requestUri);
         if (api == null) {
+            log.error("Api requst uri: " + requestUri + " not found.");
             throw new ApiAuthException("Api requst uri: " + requestUri + " not found.");
         }
 
-        ClientEntity client = clientService.getClient(clientId, group);
+        ClientEntity client = clientService.getClient(clientId);
         if (client == null) {
             throw new ApiAuthException("Client: " + client + " not found.");
         }
 
         Date now = new Date();
-        BasicAuthEntity basicAuth = new BasicAuthEntity(UUID.randomUUID().toString(), now, now, requestUri, clientId, group, EncryptUtil.getEncryptedString(password));
+        BasicAuthEntity basicAuth = new BasicAuthEntity(UUID.randomUUID().toString(), now, now, requestUri, clientId, EncryptUtil.getEncryptedString(password));
         basicAuthRepo.save(basicAuth);
 
         try {
             Api addApi = apiService.updateApiAuth(requestUri, AuthType.BASIC, true);
         } catch (ApiException e) {
+            log.error(e.getMessage(), e);
             throw new ApiAuthException(e.getMessage(), e);
         }
 
         return basicAuth;
     }
 
-    public LdapAuthEntity addLdapAuth(String requestUri, String clientId, String group, String ldapUrl,
+    public LdapAuthEntity addLdapAuth(String requestUri, String clientId, String ldapUrl,
                                       String adminDn, String adminPassword, String userBase, String userAttr, Integer cacheExpireInSecond)
             throws ApiAuthException {
         ApiEntity api = apiService.getApiByReqUri(requestUri);
@@ -159,33 +157,34 @@ public class ApiAuthServiceCassandraImpl implements ApiAuthService {
             throw new ApiAuthException("Api requst uri: " + requestUri + " not found.");
         }
 
-        ClientEntity client = clientService.getClient(clientId, group);
+        ClientEntity client = clientService.getClient(clientId);
         if (client == null) {
             throw new ApiAuthException("Client: " + client + " not found.");
         }
 
         Date now = new Date();
-        LdapAuthEntity ldapAuth = new LdapAuthEntity(UUID.randomUUID().toString(), now, now, requestUri, clientId, group,
+        LdapAuthEntity ldapAuth = new LdapAuthEntity(UUID.randomUUID().toString(), now, now, requestUri, clientId,
                 ldapUrl, adminDn, encryptor.encrypt(adminPassword), userBase, userAttr, cacheExpireInSecond);
         ldapAuthRepo.save(ldapAuth);
 
         try {
             Api addApi = apiService.updateApiAuth(requestUri, AuthType.LDAP, true);
         } catch (ApiException e) {
+            log.error(e.getMessage(), e);
             throw new ApiAuthException(e.getMessage(), e);
         }
 
         return ldapAuth;
     }
 
-    public SignatureAuthEntity addHttpSignatureAuth(String requestUri, String clientId, String group, String clientAlias, String secret)
+    public SignatureAuthEntity addHttpSignatureAuth(String requestUri, String clientId, String clientAlias, String secret)
             throws ApiAuthException, CryptoException {
         ApiEntity api = apiService.getApiByReqUri(requestUri);
         if (api == null) {
             throw new ApiAuthException("Api requst uri: " + requestUri + " not found.");
         }
 
-        ClientEntity client = clientService.getClient(clientId, group);
+        ClientEntity client = clientService.getClient(clientId);
         if (client == null) {
             throw new ApiAuthException("Client: " + client + " not found.");
         }
@@ -194,39 +193,43 @@ public class ApiAuthServiceCassandraImpl implements ApiAuthService {
         SignatureAuthEntity signatureAuth = null;
 
         try {
-            signatureAuth = new SignatureAuthEntity(UUID.randomUUID().toString(), now, now, requestUri, clientId, group, clientAlias, encryptor.encrypt(secret));
+            signatureAuth = new SignatureAuthEntity(UUID.randomUUID().toString(), now, now, requestUri, clientId, clientAlias, encryptor.encrypt(secret));
             signatureAuthRepo.save(signatureAuth);
 
             Api addApi = apiService.updateApiAuth(requestUri, AuthType.SIGNATURE, true);
         } catch (ApiException e) {
+            log.error(e.getMessage(), e);
             throw new ApiAuthException(e.getMessage(), e);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             throw new CryptoException(e);
         }
 
+        signatureAuth.setDecryptedSecret(secret);
         return signatureAuth;
     }
 
-    public JwtAuthEntity addJwtAuth(String requestUri, String clientId, String group, boolean notBefore, boolean expires) throws ApiAuthException {
+    public JwtAuthEntity addJwtAuth(String requestUri, String clientId, boolean notBefore, boolean expires) throws ApiAuthException {
         ApiEntity api = apiService.getApiByReqUri(requestUri);
         if (api == null) {
             throw new ApiAuthException("Api requst uri: " + requestUri + " not found.");
         }
 
-        ClientEntity client = clientService.getClient(clientId, group);
+        ClientEntity client = clientService.getClient(clientId);
         if (client == null) {
             throw new ApiAuthException("Client: " + client + " not found.");
         }
 
         Date now = new Date();
         String secret = UUIDs.random().toString();
-        JwtAuthEntity jwtAuth = new JwtAuthEntity(UUID.randomUUID().toString(), now, now, requestUri, clientId, group, secret);
+        JwtAuthEntity jwtAuth = new JwtAuthEntity(UUID.randomUUID().toString(), now, now, requestUri, clientId, secret);
 
         jwtAuthRepo.save(jwtAuth);
 
         try {
             Api addApi = apiService.updateApiAuth(requestUri, AuthType.JWT, true);
         } catch (ApiException e) {
+            log.error(e.getMessage(), e);
             throw new ApiAuthException(e.getMessage(), e);
         }
 
@@ -236,12 +239,12 @@ public class ApiAuthServiceCassandraImpl implements ApiAuthService {
     //-------- validations --------- //
 
     public boolean keyAuthMatches(String requestUri, String key) {
-        KeyAuthId id = new KeyAuthId(requestUri, key);
+        KeyAuthId id = new KeyAuthId(requestUri, encryptor.encrypt(key));
         return keyAuthRepo.exists(id);
     }
 
-    public boolean basicAuthMatches(String requestUri, String clientId, String group, String password) {
-        BasicAuthId id = new BasicAuthId(requestUri, clientId, group);
+    public boolean basicAuthMatches(String requestUri, String clientId, String password) {
+        BasicAuthId id = new BasicAuthId(requestUri, clientId);
         BasicAuthEntity res = basicAuthRepo.findOne(id);
         if (res == null) {
             return false;
@@ -249,9 +252,9 @@ public class ApiAuthServiceCassandraImpl implements ApiAuthService {
         return EncryptUtil.verify(password, res.getPassword());
     }
 
-    public boolean signatureAuthMatches(String requestUri, String clientId, String group, String clientAlias, String algorithm, String stringToSign, String signature) throws CryptoException {
+    public boolean signatureAuthMatches(String requestUri, String clientId, String clientAlias, String algorithm, String stringToSign, String signature) throws CryptoException {
         try {
-            SignatureAuthId id = new SignatureAuthId(requestUri, clientAlias, clientId, group);
+            SignatureAuthId id = new SignatureAuthId(requestUri, clientId, clientAlias);
             SignatureAuthEntity res = signatureAuthRepo.findOne(id);
             if (res == null) {
                 return false;
@@ -259,6 +262,7 @@ public class ApiAuthServiceCassandraImpl implements ApiAuthService {
             String serverSign = HttpSignature.signWithBase64(encryptor.decrypt(res.getSecret()), stringToSign, Algorithm.getAlgorithmByName(algorithm));
             return serverSign.equals(signature);
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             throw new CryptoException(e);
         }
     }
@@ -305,8 +309,8 @@ public class ApiAuthServiceCassandraImpl implements ApiAuthService {
         return jwtService.getClaims(token);
     }
 
-    public boolean ldapAuthMatches(String requestUri, String clientId, String group, String password) {
-        LdapAuthId id = new LdapAuthId(requestUri, clientId, group);
+    public boolean ldapAuthMatches(String requestUri, String clientId, String password) {
+        LdapAuthId id = new LdapAuthId(requestUri, clientId);
         LdapAuthEntity res = ldapAuthRepo.findOne(id);
         if (res == null) {
             return false;
