@@ -1,7 +1,3 @@
-plugins {
-    id "org.springframework.boot" version "2.0.0.RELEASE" apply false
-}
-
 configurations {all*.exclude group: "org.springframework.boot", module: "spring-boot-starter-logging"
 }
 
@@ -12,14 +8,14 @@ dependencies {
             "commons-io:commons-io:2.5",
             "javax.annotation:javax.annotation-api:1.3.2",
 
-            "org.springframework.boot:spring-boot-starter-data-cassandra:${springbootVersion}",
-            "org.springframework.boot:spring-boot-starter-log4j2:${springbootVersion}",
-            "org.springframework.boot:spring-boot-starter-actuator:${springbootVersion}")
+            "org.springframework.boot:spring-boot-starter-data-cassandra:${springBootVersion}",
+            "org.springframework.boot:spring-boot-starter-log4j2:${springBootVersion}",
+            "org.springframework.boot:spring-boot-starter-actuator:${springBootVersion}")
 
-    compile ("org.springframework.boot:spring-boot-starter:${springbootVersion}") {
+    compile ("org.springframework.boot:spring-boot-starter:${springBootVersion}") {
         exclude module : 'spring-boot-starter-logging'
     }
-    compile ("org.springframework.boot:spring-boot-starter-web:${springbootVersion}") {
+    compile ("org.springframework.boot:spring-boot-starter-web:${springBootVersion}") {
         exclude module : 'spring-boot-starter-logging'
     }
 }

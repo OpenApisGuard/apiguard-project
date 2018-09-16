@@ -13,10 +13,10 @@ subprojects {
   targetCompatibility = 1.8
 
   ext {
-    jacksonVersion = '2.8.5'
-    springbootVersion = '2.0.0.RELEASE'
-    springDataCassandraVersion = '1.5.1.RELEASE'
-    springDataVersion = '1.13.1.RELEASE'
+    jacksonVersion = '2.9.5'
+    springBootVersion = '2.0.5.RELEASE'
+    springDataCassandraVersion = '1.5.15.RELEASE'
+    springDataVersion = '1.4.1.RELEASE'
     springSecurityVersion = '4.2.2.RELEASE'
     springVersion = '4.3.5.RELEASE'
   }
